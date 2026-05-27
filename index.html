@@ -1,0 +1,2175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUDACASH — نظام إدارة تداول P2P</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #F0B429;
+    --gold-dark: #C78A00;
+    --green: #0ECB81;
+    --red: #F6465D;
+    --bg: #0B0E11;
+    --bg2: #161A1F;
+    --bg3: #1E2329;
+    --bg4: #2B3139;
+    --border: #2B3139;
+    --text: #EAECEF;
+    --text2: #848E9C;
+    --blue: #1890FF;
+    --purple: #9B59B6;
+    --bk-color: #1890FF;
+    --faisal-color: #0ECB81;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; direction: rtl; }
+
+  /* ===== BRAND HEADER ===== */
+  .brand-bar {
+    background: linear-gradient(90deg, #0B0E11 0%, #1a1200 40%, #0B0E11 100%);
+    border-bottom: 1px solid rgba(240,180,41,0.2);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+  }
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .brand-name {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #F0B429, #fff5cc, #F0B429);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brand-tagline {
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 1px;
+    font-weight: 400;
+    border-right: 1px solid var(--border);
+    padding-right: 10px;
+  }
+  .brand-version {
+    font-size: 10px;
+    color: var(--gold);
+    background: rgba(240,180,41,0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(240,180,41,0.2);
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  /* ===== SYNC STATUS ===== */
+  .sync-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+  }
+  .sync-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  .sync-indicator.synced { color: var(--green); border-color: rgba(14,203,129,0.2); background: rgba(14,203,129,0.05); }
+  .sync-indicator.synced .sync-dot { background: var(--green); }
+  .sync-indicator.syncing { color: var(--gold); border-color: rgba(240,180,41,0.2); background: rgba(240,180,41,0.05); }
+  .sync-indicator.syncing .sync-dot { background: var(--gold); animation: pulse 0.5s infinite; }
+  .sync-indicator.offline { color: var(--red); border-color: rgba(246,70,93,0.2); background: rgba(246,70,93,0.05); }
+  .sync-indicator.offline .sync-dot { background: var(--red); animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Header */
+  header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 48px; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 900; color: var(--gold); }
+  .logo span { color: var(--text2); font-size: 11px; font-weight: 400; }
+  .header-stats { display: flex; gap: 16px; align-items: center; }
+  .hstat { text-align: center; padding: 6px 12px; background: var(--bg3); border-radius: 8px; border: 1px solid var(--border); }
+  .hstat-label { font-size: 10px; color: var(--text2); margin-bottom: 2px; }
+  .hstat-value { font-size: 14px; font-weight: 700; font-family: 'Tajawal', sans-serif; }
+  .hstat.bk .hstat-value { color: var(--bk-color); }
+  .hstat.faisal .hstat-value { color: var(--faisal-color); }
+
+  /* Nav */
+  nav { background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; padding: 0 16px; gap: 2px; overflow-x: auto; position: sticky; top: calc(48px + 64px); z-index: 99; }
+  nav::-webkit-scrollbar { height: 0; }
+  .tab { padding: 12px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text2); border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* Layout */
+  main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Grids */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-title { font-size: 12px; color: var(--text2); margin-bottom: 8px; font-weight: 500; }
+  .card-value { font-size: 22px; font-weight: 700; font-family: 'Tajawal', sans-serif; }
+  .card-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .card.green .card-value { color: var(--green); }
+  .card.red .card-value { color: var(--red); }
+  .card.gold .card-value { color: var(--gold); }
+  .card.blue .card-value { color: var(--blue); }
+  .card.purple .card-value { color: var(--purple); }
+
+  /* Account Cards */
+  .accounts-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .account-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; position: relative; overflow: hidden; }
+  .account-card::before { content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; border-radius: 0 12px 12px 0; }
+  .account-card.bk::before { background: var(--bk-color); }
+  .account-card.faisal::before { background: var(--faisal-color); }
+  .account-card-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .account-card-name { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .account-card-balance { font-size: 20px; font-weight: 700; font-family: 'Tajawal', sans-serif; }
+  .account-card.bk .account-card-balance { color: var(--bk-color); }
+  .account-card.faisal .account-card-balance { color: var(--faisal-color); }
+  .account-card-type { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .account-card-total { background: linear-gradient(135deg, rgba(240,180,41,0.1), rgba(14,203,129,0.06)); border-color: rgba(240,180,41,0.25); }
+  .account-card-total .account-card-balance { color: var(--gold); }
+
+  /* Section header */
+  .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .sec-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .sec-title::before { content: ''; width: 3px; height: 18px; background: var(--gold); border-radius: 2px; }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 12px; color: var(--text2); font-weight: 600; }
+  .form-group input, .form-group select { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'Cairo', sans-serif; font-size: 14px; transition: border 0.2s; direction: rtl; }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--gold); }
+  .form-group select option { background: var(--bg3); }
+  .form-hint { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* Buttons */
+  .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700; transition: all 0.2s; }
+  .btn-gold { background: var(--gold); color: #000; }
+  .btn-gold:hover { background: var(--gold-dark); }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-green:hover { background: #0aa86b; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-red:hover { background: #d4334d; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-blue:hover { background: #1070cc; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-outline.active-filter { border-color: var(--gold); color: var(--gold); background: rgba(240,180,41,0.08); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 6px; }
+
+  /* Tables */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  thead th { background: var(--bg3); padding: 11px 14px; font-size: 11px; color: var(--text2); font-weight: 600; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 11px 14px; font-size: 13px; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: rgba(14,203,129,0.15); color: var(--green); }
+  .badge-red { background: rgba(246,70,93,0.15); color: var(--red); }
+  .badge-gold { background: rgba(240,180,41,0.15); color: var(--gold); }
+  .badge-blue { background: rgba(24,144,255,0.15); color: var(--blue); }
+
+  /* Account badge */
+  .acc-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .acc-badge.bk { background: rgba(24,144,255,0.15); color: var(--bk-color); }
+  .acc-badge.faisal { background: rgba(14,203,129,0.15); color: var(--faisal-color); }
+  .acc-badge.other { background: rgba(240,180,41,0.15); color: var(--gold); }
+
+  /* Platform */
+  .platform { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; }
+  .platform.binance { color: #F0B429; }
+  .platform.okx { color: #e0e0e0; }
+
+  /* Calc box */
+  .calc-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-top: 12px; }
+  .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
+  .calc-row.total { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; font-weight: 700; font-size: 15px; color: var(--green); }
+  .calc-row.total.loss { color: var(--red); }
+
+  /* Empty */
+  .empty { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* Notification */
+  .notif { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid var(--green); color: var(--green); padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+  .notif.show { opacity: 1; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 90%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* Growth badge */
+  .growth-pos { color: var(--green); }
+  .growth-neg { color: var(--red); }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* Analytics cards */
+  .analytics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+  .stat-value { font-size: 18px; font-weight: 700; font-family: 'Tajawal', sans-serif; }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* Settings */
+  .settings-section { margin-bottom: 24px; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* Account manager */
+  .account-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--bg3); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border); }
+  .account-row-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .account-row-info { flex: 1; }
+  .account-row-name { font-size: 14px; font-weight: 700; }
+  .account-row-type { font-size: 11px; color: var(--text2); }
+  .account-row-balance { font-size: 16px; font-weight: 700; font-family: 'Tajawal', sans-serif; color: var(--gold); margin-left: auto; margin-right: 8px; }
+
+  /* Firebase Setup Screen */
+  .setup-screen { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; padding: 24px; }
+  .setup-screen.show { display: flex; }
+  .setup-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 100%; max-width: 500px; }
+  .setup-logo { font-size: 28px; font-weight: 900; letter-spacing: 2px; background: linear-gradient(135deg, #F0B429, #fff5cc, #F0B429); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+  .setup-subtitle { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+  .setup-field { margin-bottom: 16px; }
+  .setup-field label { font-size: 12px; color: var(--text2); font-weight: 600; display: block; margin-bottom: 6px; }
+  .setup-field input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'Cairo', sans-serif; font-size: 13px; direction: ltr; }
+  .setup-field input:focus { outline: none; border-color: var(--gold); }
+  .setup-note { font-size: 11px; color: var(--text2); margin-top: 16px; line-height: 1.6; }
+  .setup-note a { color: var(--gold); }
+
+  /* Loading overlay */
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+  .loading-overlay.show { display: flex; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ========== RESPONSIVE — MOBILE FIRST ========== */
+
+  /* Tablet 900px */
+  @media (max-width: 900px) {
+    .grid-4, .analytics-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    header { top: 48px; height: 56px; }
+    nav { top: calc(48px + 56px); }
+    main { padding: 16px; }
+  }
+
+  /* Mobile 600px */
+  @media (max-width: 600px) {
+    /* Header & Brand */
+    .brand-bar { padding: 0 12px; height: 44px; }
+    .brand-name { font-size: 18px; letter-spacing: 1px; }
+    .brand-tagline { display: none; }
+    .brand-version { font-size: 9px; padding: 2px 6px; }
+    header { padding: 0 12px; height: 48px; top: 44px; }
+    .logo { font-size: 14px; }
+    .header-stats { display: none; }
+    nav { top: calc(44px + 48px); padding: 0 8px; }
+    .tab { padding: 10px 10px; font-size: 12px; }
+
+    /* Main content */
+    main { padding: 12px; }
+
+    /* Grids → single column on mobile */
+    .grid-4 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-2 { grid-template-columns: 1fr; gap: 12px; }
+    .analytics-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+    /* Cards */
+    .card { padding: 14px; }
+    .card-value { font-size: 18px; }
+    .card-title { font-size: 11px; }
+    .account-card { padding: 12px 14px; }
+    .account-card-balance { font-size: 17px; }
+    .stat-card { padding: 12px; }
+    .stat-value { font-size: 15px; }
+
+    /* Forms → 1 column */
+    .form-grid   { grid-template-columns: 1fr; }
+    .form-grid-4 { grid-template-columns: 1fr; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+    .form-group input,
+    .form-group select { font-size: 16px; padding: 12px 14px; }
+
+    /* Calc box */
+    .calc-row { font-size: 12px; }
+    .calc-row.total { font-size: 14px; }
+
+    /* Buttons */
+    .btn { font-size: 13px; padding: 10px 16px; width: 100%; text-align: center; }
+    .btn-sm { width: auto; font-size: 12px; padding: 6px 12px; }
+    .btn-xs { width: auto; font-size: 11px; padding: 3px 8px; }
+
+    /* Sec header */
+    .sec-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .sec-header > div:last-child { width: 100%; display: flex; gap: 8px; flex-wrap: wrap; }
+    .sec-header .btn-sm { flex: 1; text-align: center; }
+
+    /* Filter bar */
+    .filter-bar { gap: 6px; }
+    .filter-bar .form-group { min-width: 120px; flex: 1; }
+    .filter-bar input,
+    .filter-bar select { font-size: 13px !important; padding: 7px 10px !important; }
+
+    /* Tables — keep scroll, improve touch */
+    .table-scroll { -webkit-overflow-scrolling: touch; }
+    thead th { padding: 8px 10px; font-size: 10px; }
+    tbody td  { padding: 8px 10px; font-size: 12px; }
+
+    /* Account row */
+    .account-row { flex-wrap: wrap; gap: 8px; }
+    .account-row-balance { margin: 0; font-size: 14px; }
+
+    /* Modal */
+    .modal { padding: 20px; border-radius: 12px; }
+    .modal-footer { flex-direction: column-reverse; }
+    .modal-footer .btn { width: 100%; }
+
+    /* Setup screen */
+    .setup-card { padding: 24px 18px; }
+
+    /* Notification */
+    .notif { font-size: 13px; padding: 10px 18px; bottom: 16px; max-width: 90vw; white-space: normal; text-align: center; }
+
+    /* Accounts banner → 1 per row on very small */
+    .accounts-banner { grid-template-columns: 1fr 1fr; gap: 8px; }
+  }
+
+  /* Very small screens 380px */
+  @media (max-width: 380px) {
+    .grid-4, .grid-3, .analytics-grid { grid-template-columns: 1fr; }
+    .accounts-banner { grid-template-columns: 1fr; }
+    .brand-name { font-size: 16px; }
+    .tab { font-size: 11px; padding: 10px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Brand Bar -->
+<div class="brand-bar">
+  <div class="brand-logo">
+    <span class="brand-tagline">P2P TRADING MANAGER</span>
+    <span class="brand-name">SUDACASH</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="sync-indicator synced" id="sync-status">
+      <div class="sync-dot"></div>
+      <span id="sync-text">متزامن</span>
+    </div>
+    <span class="brand-version">v4.0</span>
+  </div>
+</div>
+
+<header>
+  <div class="logo">⚡ لوحة التداول <span>— SUDACASH</span></div>
+  <div class="header-stats">
+    <div class="hstat bk">
+      <div class="hstat-label">🏦 بنك الخرطوم</div>
+      <div class="hstat-value" id="h-bk">0 SDG</div>
+    </div>
+    <div class="hstat faisal">
+      <div class="hstat-label">💳 فيصل (فوري)</div>
+      <div class="hstat-value" id="h-faisal">0 SDG</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-label">📦 المخزون</div>
+      <div class="hstat-value" id="h-stock" style="color:var(--text)">0 USDT</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-label">📈 إجمالي الربح</div>
+      <div class="hstat-value" id="h-profit" style="color:var(--green)">0 SDG</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-label">🔄 الصفقات</div>
+      <div class="hstat-value" id="h-trades">0</div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('dashboard', this)">📊 لوحة التحكم</div>
+  <div class="tab" onclick="showTab('buy', this)">🟢 تسجيل شراء</div>
+  <div class="tab" onclick="showTab('sell', this)">🔴 تسجيل بيع</div>
+  <div class="tab" onclick="showTab('history', this)">📋 السجل</div>
+  <div class="tab" onclick="showTab('inventory', this)">📦 المخزون</div>
+  <div class="tab" onclick="showTab('calc', this)">🧮 الحاسبة</div>
+  <div class="tab" onclick="showTab('analytics', this)">📈 التحليلات</div>
+  <div class="tab" onclick="showTab('cash', this)">💰 النقدية</div>
+  <div class="tab" onclick="showTab('settings', this)">⚙️ الإعدادات</div>
+</nav>
+
+<main>
+
+<!-- ========== DASHBOARD ========== -->
+<div class="section active" id="tab-dashboard">
+  <div class="accounts-banner" id="accounts-banner"></div>
+  <div class="grid-4">
+    <div class="card gold">
+      <div class="card-title">📦 المخزون الحالي</div>
+      <div class="card-value" id="d-stock">0 USDT</div>
+      <div class="card-sub" id="d-stock-sdg">≈ 0 SDG</div>
+    </div>
+    <div class="card green">
+      <div class="card-title">📈 إجمالي الأرباح</div>
+      <div class="card-value" id="d-profit">0 SDG</div>
+      <div class="card-sub" id="d-profit-usdt"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 عدد الصفقات</div>
+      <div class="card-value" id="d-trades">0</div>
+      <div class="card-sub" id="d-trades-split">شراء: 0 | بيع: 0</div>
+    </div>
+    <div class="card blue">
+      <div class="card-title">📊 متوسط هامش الربح</div>
+      <div class="card-value" id="d-margin">0%</div>
+      <div class="card-sub">لكل صفقة بيع</div>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">🟢 إجمالي المشتريات</div>
+      <div class="card-value" id="d-total-bought">0 USDT</div>
+      <div class="card-sub" id="d-total-bought-sdg">= 0 SDG</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔴 إجمالي المبيعات</div>
+      <div class="card-value" id="d-total-sold">0 USDT</div>
+      <div class="card-sub" id="d-total-sold-sdg">= 0 SDG</div>
+    </div>
+    <div class="card">
+      <div class="card-title">💵 رأس المال الكلي</div>
+      <div class="card-value" id="d-total-capital">0 SDG</div>
+      <div class="card-sub" id="d-growth">نمو: —</div>
+    </div>
+  </div>
+  <div class="sec-header"><div class="sec-title">آخر الصفقات</div></div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>التاريخ</th><th>النوع</th><th>المنصة</th><th>الحساب</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th><th>العمولة</th><th>الربح</th></tr></thead>
+        <tbody id="recent-trades"><tr><td colspan="9" class="empty"><div class="empty-icon">📭</div>لا توجد صفقات بعد</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== BUY ========== -->
+<div class="section" id="tab-buy">
+  <div class="sec-header"><div class="sec-title">تسجيل عملية شراء USDT</div></div>
+  <div class="card">
+    <div class="form-grid-4">
+      <div class="form-group">
+        <label>📅 التاريخ</label>
+        <input type="date" id="buy-date">
+      </div>
+      <div class="form-group">
+        <label>🏦 المنصة</label>
+        <select id="buy-platform">
+          <option value="Binance">Binance بينانس</option>
+          <option value="OKX">OKX</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>💳 الحساب المُدفوع منه</label>
+        <select id="buy-account"></select>
+      </div>
+      <div class="form-group">
+        <label>💵 الكمية (USDT)</label>
+        <input type="number" id="buy-amount" placeholder="مثال: 500" min="0" step="0.01" oninput="calcBuyTotal()">
+      </div>
+      <div class="form-group">
+        <label>💰 سعر الشراء (SDG/USDT)</label>
+        <input type="number" id="buy-price" placeholder="مثال: 1850" min="0" step="0.01" oninput="calcBuyTotal()">
+      </div>
+      <div class="form-group">
+        <label>🔢 إجمالي المدفوع (SDG)</label>
+        <input type="number" id="buy-total" placeholder="يُحسب تلقائياً" min="0" step="0.01" oninput="calcBuyPrice()">
+      </div>
+      <div class="form-group">
+        <label>🏦 عمولة البنك — مبلغ ثابت (SDG)</label>
+        <input type="number" id="buy-fee-fixed" placeholder="مثال: 500" min="0" step="0.01" oninput="calcBuyFee()">
+        <span class="form-hint">اتركه فارغاً إن لم يكن هناك عمولة</span>
+      </div>
+      <div class="form-group">
+        <label>📊 عمولة البنك — نسبة مئوية (%)</label>
+        <input type="number" id="buy-fee-pct" placeholder="مثال: 0.5" min="0" step="0.01" oninput="calcBuyFeePct()">
+        <span class="form-hint">تُحسب من إجمالي المدفوع</span>
+      </div>
+      <div class="form-group">
+        <label>📝 ملاحظات</label>
+        <input type="text" id="buy-notes" placeholder="اختياري...">
+      </div>
+    </div>
+    <div class="calc-box" id="buy-preview">
+      <div class="calc-row"><span>الكمية المشتراة</span><span id="bp-amount" style="color:var(--gold)">-</span></div>
+      <div class="calc-row"><span>سعر الشراء</span><span id="bp-price">-</span></div>
+      <div class="calc-row"><span>إجمالي المدفوع</span><span id="bp-total">-</span></div>
+      <div class="calc-row"><span>عمولة البنك</span><span id="bp-fee" style="color:var(--red)">-</span></div>
+      <div class="calc-row"><span>إجمالي التكلفة الحقيقية</span><span id="bp-real-total" style="color:var(--text)">-</span></div>
+      <div class="calc-row total"><span>التكلفة الحقيقية لكل USDT</span><span id="bp-real-price" style="color:var(--green)">-</span></div>
+    </div>
+    <br>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="addBuy()">✅ تأكيد الشراء وإضافة للمخزون</button>
+      <span style="font-size:12px;color:var(--text2)" id="buy-cash-note"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SELL ========== -->
+<div class="section" id="tab-sell">
+  <div class="sec-header"><div class="sec-title">تسجيل عملية بيع USDT</div></div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>📅 التاريخ</label>
+        <input type="date" id="sell-date">
+      </div>
+      <div class="form-group">
+        <label>🏦 المنصة</label>
+        <select id="sell-platform">
+          <option value="Binance">Binance بينانس</option>
+          <option value="OKX">OKX</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>💳 الحساب المُستلَم فيه</label>
+        <select id="sell-account"></select>
+      </div>
+      <div class="form-group">
+        <label>💵 الكمية المباعة (USDT)</label>
+        <input type="number" id="sell-amount" placeholder="مثال: 200" min="0" step="0.01" oninput="calcSellProfit()">
+      </div>
+      <div class="form-group">
+        <label>💰 سعر البيع (SDG/USDT)</label>
+        <input type="number" id="sell-price" placeholder="مثال: 1870" min="0" step="0.01" oninput="calcSellProfit()">
+      </div>
+      <div class="form-group">
+        <label>📦 متوسط تكلفة الشراء (SDG)</label>
+        <input type="number" id="sell-cost" placeholder="يُحسب من المخزون" min="0" step="0.01" oninput="calcSellProfit()">
+      </div>
+      <div class="form-group">
+        <label>📝 ملاحظات</label>
+        <input type="text" id="sell-notes" placeholder="اختياري...">
+      </div>
+    </div>
+    <div class="calc-box">
+      <div class="calc-row"><span>إيرادات البيع</span><span id="sp-revenue">-</span></div>
+      <div class="calc-row"><span>تكلفة البضاعة المباعة</span><span id="sp-cost">-</span></div>
+      <div class="calc-row"><span>هامش الربح %</span><span id="sp-margin" style="color:var(--blue)">-</span></div>
+      <div class="calc-row total" id="sp-profit-row"><span>الربح الصافي</span><span id="sp-profit">-</span></div>
+    </div>
+    <br>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-red" onclick="addSell()">🔴 تأكيد البيع وخصم من المخزون</button>
+      <span style="font-size:12px;color:var(--text2)">المخزون المتاح: <strong id="sell-stock-avail" style="color:var(--gold)">0 USDT</strong></span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== HISTORY ========== -->
+<div class="section" id="tab-history">
+  <div class="sec-header">
+    <div class="sec-title">سجل الصفقات الكامل</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-blue btn-sm" onclick="exportExcel()">📥 تصدير Excel</button>
+      <button class="btn btn-red btn-sm" onclick="clearAll()">🗑 حذف الكل</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px;padding:14px 18px">
+    <div class="filter-bar">
+      <button class="btn btn-outline btn-sm active-filter" id="f-all" onclick="setFilter('all', this)">الكل</button>
+      <button class="btn btn-outline btn-sm" id="f-buy" onclick="setFilter('buy', this)">🟢 شراء</button>
+      <button class="btn btn-outline btn-sm" id="f-sell" onclick="setFilter('sell', this)">🔴 بيع</button>
+      <div style="width:1px;background:var(--border);height:24px;margin:0 4px"></div>
+      <div class="form-group" style="margin:0">
+        <input type="text" id="f-platform" placeholder="🏦 المنصة" style="padding:6px 12px;font-size:12px" oninput="renderHistory()">
+      </div>
+      <div class="form-group" style="margin:0">
+        <select id="f-account" style="padding:6px 12px;font-size:12px" onchange="renderHistory()">
+          <option value="">💳 كل الحسابات</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <input type="date" id="f-from" style="padding:6px 12px;font-size:12px" oninput="renderHistory()">
+      </div>
+      <span style="font-size:12px;color:var(--text2)">إلى</span>
+      <div class="form-group" style="margin:0">
+        <input type="date" id="f-to" style="padding:6px 12px;font-size:12px" oninput="renderHistory()">
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="clearFilters()">✕ مسح</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>التاريخ</th><th>النوع</th><th>المنصة</th><th>الحساب</th>
+            <th>الكمية (USDT)</th><th>السعر (SDG)</th><th>الإجمالي (SDG)</th>
+            <th>العمولة (SDG)</th><th>التكلفة الحقيقية</th><th>الربح (SDG)</th>
+            <th>ملاحظات</th><th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="trades-table"><tr><td colspan="13" class="empty"><div class="empty-icon">📭</div>لا توجد صفقات</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== INVENTORY ========== -->
+<div class="section" id="tab-inventory">
+  <div class="sec-header"><div class="sec-title">إدارة المخزون</div></div>
+  <div class="grid-3">
+    <div class="card gold">
+      <div class="card-title">📦 المخزون المتاح</div>
+      <div class="card-value" id="inv-stock">0 USDT</div>
+      <div class="card-sub" id="inv-stock-sdg">بتكلفة 0 SDG</div>
+    </div>
+    <div class="card blue">
+      <div class="card-title">📊 متوسط سعر التكلفة الحقيقي</div>
+      <div class="card-value" id="inv-avg-cost">0 SDG</div>
+      <div class="card-sub">شامل العمولات البنكية</div>
+    </div>
+    <div class="card green">
+      <div class="card-title">💡 سعر البيع المقترح</div>
+      <div class="card-value" id="inv-suggest">0 SDG</div>
+      <div class="card-sub" id="inv-suggest-pct">بهامش 1.5% من التكلفة</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:16px">🔧 تعديل المخزون اليدوي</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>الكمية (USDT)</label>
+        <input type="number" id="adj-amount" placeholder="أدخل الكمية" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>متوسط التكلفة الحقيقية (SDG/USDT)</label>
+        <input type="number" id="adj-cost" placeholder="شامل العمولات" min="0" step="0.01">
+      </div>
+      <div class="form-group" style="justify-content:flex-end">
+        <label>&nbsp;</label>
+        <button class="btn btn-gold" onclick="adjustInventory()">💾 حفظ التعديل</button>
+      </div>
+    </div>
+  </div>
+  <br>
+  <div class="sec-header"><div class="sec-title">تاريخ دفعات الشراء</div></div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>التاريخ</th><th>المنصة</th><th>الحساب</th><th>الكمية (USDT)</th><th>سعر الشراء</th><th>الإجمالي (SDG)</th><th>العمولة (SDG)</th><th>التكلفة الحقيقية/USDT</th></tr></thead>
+        <tbody id="inventory-table"><tr><td colspan="8" class="empty"><div class="empty-icon">📦</div>لا توجد مشتريات</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CALCULATOR ========== -->
+<div class="section" id="tab-calc">
+  <div class="sec-header"><div class="sec-title">🧮 حاسبة الربح</div></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">حساب سعر البيع المناسب</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>الكمية (USDT)</label>
+        <input type="number" id="c-amount" placeholder="مثال: 500" oninput="calcHelper()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>سعر الشراء (SDG/USDT)</label>
+        <input type="number" id="c-buy" placeholder="مثال: 1850" oninput="calcHelper()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>عمولة البنك (SDG)</label>
+        <input type="number" id="c-fee" placeholder="مثال: 500 — اختياري" oninput="calcHelper()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>نسبة الربح المطلوبة %</label>
+        <input type="number" id="c-margin" placeholder="مثال: 1.5" oninput="calcHelper()">
+      </div>
+      <div class="calc-box">
+        <div class="calc-row"><span>تكلفة الشراء الكلية</span><span id="c-total-cost">-</span></div>
+        <div class="calc-row"><span>العمولة</span><span id="c-fee-val" style="color:var(--red)">-</span></div>
+        <div class="calc-row"><span>التكلفة الحقيقية/USDT</span><span id="c-real-price" style="color:var(--blue)">-</span></div>
+        <div class="calc-row"><span>سعر البيع المقترح</span><span id="c-sell-price" style="color:var(--gold)">-</span></div>
+        <div class="calc-row total"><span>الربح الصافي</span><span id="c-net" style="color:var(--green)">-</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">حساب هامش صفقة محددة</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>سعر الشراء (SDG/USDT)</label>
+        <input type="number" id="m-buy" placeholder="مثال: 1850" oninput="calcMargin()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>سعر البيع (SDG/USDT)</label>
+        <input type="number" id="m-sell" placeholder="مثال: 1880" oninput="calcMargin()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>الكمية (USDT)</label>
+        <input type="number" id="m-amount" placeholder="مثال: 300" oninput="calcMargin()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>عمولة البنك (SDG) — اختياري</label>
+        <input type="number" id="m-fee" placeholder="مثال: 500" oninput="calcMargin()">
+      </div>
+      <div class="calc-box">
+        <div class="calc-row"><span>فرق السعر</span><span id="m-spread">-</span></div>
+        <div class="calc-row"><span>نسبة الهامش الإجمالية</span><span id="m-pct" style="color:var(--blue)">-</span></div>
+        <div class="calc-row"><span>ربح قبل العمولة</span><span id="m-gross">-</span></div>
+        <div class="calc-row total"><span>الربح الصافي (بعد العمولة)</span><span id="m-total">-</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ANALYTICS ========== -->
+<div class="section" id="tab-analytics">
+  <div class="sec-header"><div class="sec-title">📈 التحليلات والإحصاءات</div></div>
+  <div class="analytics-grid">
+    <div class="stat-card"><div class="stat-label">🏆 أفضل يوم ربحاً</div><div class="stat-value" id="a-best-day" style="color:var(--green)">—</div><div class="stat-sub" id="a-best-day-profit"></div></div>
+    <div class="stat-card"><div class="stat-label">🏦 أكثر منصة استخداماً</div><div class="stat-value" id="a-top-platform" style="color:var(--gold)">—</div><div class="stat-sub" id="a-top-platform-count"></div></div>
+    <div class="stat-card"><div class="stat-label">📊 متوسط حجم الصفقة</div><div class="stat-value" id="a-avg-size" style="color:var(--blue)">—</div><div class="stat-sub">USDT</div></div>
+    <div class="stat-card"><div class="stat-label">💸 إجمالي العمولات المدفوعة</div><div class="stat-value" id="a-total-fees" style="color:var(--red)">0</div><div class="stat-sub">SDG</div></div>
+    <div class="stat-card"><div class="stat-label">📈 أعلى هامش ربح</div><div class="stat-value" id="a-max-margin" style="color:var(--green)">—</div><div class="stat-sub" id="a-max-margin-date"></div></div>
+    <div class="stat-card"><div class="stat-label">💰 أكبر صفقة بيع</div><div class="stat-value" id="a-max-sell" style="color:var(--gold)">—</div><div class="stat-sub" id="a-max-sell-date"></div></div>
+    <div class="stat-card"><div class="stat-label">📅 عدد أيام التداول</div><div class="stat-value" id="a-trading-days" style="color:var(--blue)">0</div><div class="stat-sub">يوم فريد</div></div>
+    <div class="stat-card"><div class="stat-label">💵 متوسط الربح اليومي</div><div class="stat-value" id="a-daily-profit" style="color:var(--green)">—</div><div class="stat-sub">SDG / يوم تداول</div></div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <div class="sec-header"><div class="sec-title">توزيع الصفقات بين المنصتين</div></div>
+      <div class="card" id="platform-breakdown"><div style="color:var(--text2);text-align:center;padding:20px">لا توجد صفقات بعد</div></div>
+    </div>
+    <div>
+      <div class="sec-header"><div class="sec-title">أفضل 5 صفقات بيع ربحاً</div></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>التاريخ</th><th>الكمية</th><th>الهامش%</th><th>الربح</th></tr></thead><tbody id="top-trades"></tbody></table></div>
+    </div>
+  </div>
+  <div class="sec-header" style="margin-top:20px"><div class="sec-title">توزيع الأرباح بين الحسابات</div></div>
+  <div class="card" id="account-breakdown"><div style="color:var(--text2);text-align:center;padding:20px">لا توجد صفقات بعد</div></div>
+</div>
+
+<!-- ========== CASH MANAGEMENT ========== -->
+
+
+<!-- ========== CASH MANAGEMENT ========== -->
+<div class="section" id="tab-cash">
+  <div class="sec-header"><div class="sec-title">💰 إدارة النقدية</div></div>
+
+  <!-- Account Balances -->
+  <div id="cash-accounts-banner" class="accounts-banner" style="margin-bottom:20px"></div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+
+    <!-- إيداع / سحب -->
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">🏦 إيداع أو سحب</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>📅 التاريخ</label>
+        <input type="date" id="cash-date">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>💳 الحساب</label>
+        <select id="cash-account"></select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>🔄 النوع</label>
+        <select id="cash-type" onchange="updateCashType()">
+          <option value="deposit">⬆️ إيداع — إضافة للحساب</option>
+          <option value="withdraw">⬇️ سحب — خصم من الحساب</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>💵 المبلغ (SDG)</label>
+        <input type="number" id="cash-amount" placeholder="مثال: 50000" min="0" step="0.01" oninput="calcCashPreview()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>📝 السبب / الملاحظة</label>
+        <input type="text" id="cash-notes" placeholder="مثال: رأس مال جديد، سحب شخصي...">
+      </div>
+      <div class="form-group" style="margin-bottom:12px" id="cash-fee-group">
+        <label>💸 عمولة السحب (SDG) <span style="color:var(--text2);font-weight:400">— اختياري</span></label>
+        <input type="number" id="cash-fee" placeholder="مثال: 15" min="0" step="0.01" oninput="calcCashPreview()">
+        <span class="form-hint">تُخصم إضافةً للمبلغ عند السحب فقط</span>
+      </div>
+      <div class="calc-box" style="margin-bottom:14px">
+        <div class="calc-row"><span>الرصيد الحالي</span><span id="cp-before" style="color:var(--text)">-</span></div>
+        <div class="calc-row"><span>المبلغ</span><span id="cp-amount" style="color:var(--gold)">-</span></div>
+        <div class="calc-row"><span>العمولة</span><span id="cp-fee" style="color:var(--red)">-</span></div>
+        <div class="calc-row total"><span>الرصيد بعد العملية</span><span id="cp-after">-</span></div>
+      </div>
+      <button class="btn btn-gold" onclick="addCashEntry()">✅ تأكيد العملية</button>
+    </div>
+
+    <!-- تحويل بين الحسابات -->
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:16px">🔁 تحويل بين الحسابات</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>📅 التاريخ</label>
+        <input type="date" id="transfer-date">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>📤 من حساب</label>
+        <select id="transfer-from" onchange="calcTransferPreview()"></select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>📥 إلى حساب</label>
+        <select id="transfer-to" onchange="calcTransferPreview()"></select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>💵 المبلغ المُحوَّل (SDG)</label>
+        <input type="number" id="transfer-amount" placeholder="مثال: 20000" min="0" step="0.01" oninput="calcTransferPreview()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>💸 عمولة السحب (SDG)</label>
+        <input type="number" id="transfer-fee" placeholder="مثال: 25" min="0" step="0.01" oninput="calcTransferPreview()">
+        <span class="form-hint">تُخصم من حساب المُرسِل إضافةً للمبلغ</span>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>📝 ملاحظات</label>
+        <input type="text" id="transfer-notes" placeholder="اختياري...">
+      </div>
+      <div class="calc-box" style="margin-bottom:14px">
+        <div class="calc-row"><span>المبلغ المُحوَّل</span><span id="tp-amount" style="color:var(--gold)">-</span></div>
+        <div class="calc-row"><span>عمولة السحب</span><span id="tp-fee" style="color:var(--red)">-</span></div>
+        <div class="calc-row"><span>إجمالي الخصم من المُرسِل</span><span id="tp-total-deduct" style="color:var(--red)">-</span></div>
+        <div class="calc-row"><span>المبلغ الواصل للمستقبِل</span><span id="tp-received" style="color:var(--green)">-</span></div>
+        <div class="calc-row total"><span>رصيد المُرسِل بعد التحويل</span><span id="tp-from-after">-</span></div>
+      </div>
+      <button class="btn btn-blue" onclick="addTransfer()">🔁 تأكيد التحويل</button>
+    </div>
+  </div>
+
+  <!-- سجل حركات النقدية -->
+  <div class="sec-header">
+    <div class="sec-title">📋 سجل حركات النقدية</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="cash-filter-acc" class="btn btn-outline btn-sm" style="cursor:pointer" onchange="renderCashLog()">
+        <option value="">كل الحسابات</option>
+      </select>
+      <select id="cash-filter-type" class="btn btn-outline btn-sm" style="cursor:pointer" onchange="renderCashLog()">
+        <option value="">كل الأنواع</option>
+        <option value="deposit">إيداع</option>
+        <option value="withdraw">سحب</option>
+        <option value="transfer_out">تحويل صادر</option>
+        <option value="transfer_in">تحويل وارد</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>التاريخ</th><th>النوع</th><th>الحساب</th>
+            <th>المبلغ (SDG)</th><th>العمولة (SDG)</th><th>الرصيد بعد (SDG)</th><th>ملاحظات</th>
+            <th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="cash-log-table">
+          <tr><td colspan="9" class="empty"><div class="empty-icon">💰</div>لا توجد حركات بعد</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SETTINGS ========== -->
+<div class="section" id="tab-settings">
+  <div class="sec-header"><div class="sec-title">⚙️ الإعدادات والإعداد الأولي</div></div>
+
+  <!-- Firebase Status -->
+  <div class="card" style="margin-bottom:16px;border-color:rgba(240,180,41,0.3)">
+    <div class="sec-title" style="margin-bottom:12px">☁️ حالة المزامنة السحابية</div>
+    <div id="firebase-status-card" style="font-size:13px;color:var(--text2)">جاري الاتصال...</div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="showSetupScreen()">🔧 تغيير إعدادات Firebase</button>
+      <button class="btn btn-outline btn-sm" onclick="forcSync()">🔄 مزامنة يدوية</button>
+    </div>
+  </div>
+
+  <!-- Accounts Manager -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="margin-bottom:16px">🏦 إدارة الحسابات البنكية</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">حدد الرصيد الابتدائي لكل حساب. سيُخصم/يُضاف تلقائياً عند تسجيل الصفقات.</p>
+    <div id="accounts-list"></div>
+    <div class="divider"></div>
+    <div class="sec-title" style="margin-bottom:12px;font-size:13px">➕ إضافة حساب جديد</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>اسم الحساب</label>
+        <input type="text" id="new-acc-name" placeholder="مثال: بنك أبوظبي">
+      </div>
+      <div class="form-group">
+        <label>النوع / الوصف</label>
+        <input type="text" id="new-acc-type" placeholder="مثال: تحويل / فوري">
+      </div>
+      <div class="form-group">
+        <label>الرصيد الابتدائي (SDG)</label>
+        <input type="number" id="new-acc-balance" placeholder="مثال: 100000" min="0">
+      </div>
+    </div>
+    <button class="btn btn-gold" onclick="addAccount()">➕ إضافة الحساب</button>
+  </div>
+
+  <!-- Opening Balance -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="margin-bottom:16px">💼 رأس المال الابتدائي الكلي</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">لحساب نمو رأس المال.</p>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label>📦 مخزون USDT الابتدائي (اختياري)</label>
+        <input type="number" id="s-init-usdt" placeholder="مثال: 200" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>💰 متوسط تكلفة المخزون الابتدائي (SDG/USDT)</label>
+        <input type="number" id="s-init-usdt-cost" placeholder="مثال: 1850" min="0" step="0.01">
+      </div>
+    </div>
+    <button class="btn btn-gold" onclick="saveOpeningBalance()">💾 حفظ</button>
+    <div id="s-opening-display" style="margin-top:12px;font-size:13px;color:var(--text2)"></div>
+  </div>
+
+  <!-- Default Margin -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="margin-bottom:16px">📊 هامش الربح الافتراضي</div>
+    <div style="display:flex;gap:12px;align-items:flex-end">
+      <div class="form-group" style="flex:1">
+        <label>نسبة الهامش الافتراضية (%)</label>
+        <input type="number" id="s-default-margin" placeholder="مثال: 1.5" min="0" step="0.01">
+      </div>
+      <button class="btn btn-gold" onclick="saveDefaultMargin()">💾 حفظ</button>
+    </div>
+  </div>
+
+  <!-- Backup -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-title" style="margin-bottom:16px">🔒 النسخ الاحتياطي والاستيراد</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="exportJSON()">📤 تصدير نسخة احتياطية (JSON)</button>
+      <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">📥 استيراد نسخة احتياطية</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)">
+      <button class="btn btn-blue" onclick="exportExcel()">📊 تصدير Excel (CSV)</button>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">⚠️ الاستيراد سيستبدل جميع البيانات الحالية.</p>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="card" style="border-color:rgba(246,70,93,0.3)">
+    <div class="sec-title" style="margin-bottom:16px;color:var(--red)">⚠️ منطقة الخطر</div>
+    <button class="btn btn-red" onclick="resetAll()">🗑 حذف جميع البيانات وإعادة الضبط الكامل</button>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">هذا الإجراء يحذف جميع الصفقات والإعدادات ولا يمكن التراجع عنه.</p>
+  </div>
+</div>
+
+</main>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ تعديل الصفقة</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-grid">
+      <div class="form-group"><label>التاريخ</label><input type="date" id="edit-date"></div>
+      <div class="form-group"><label>المنصة</label><select id="edit-platform"><option value="Binance">Binance</option><option value="OKX">OKX</option></select></div>
+      <div class="form-group"><label>الحساب</label><select id="edit-account"></select></div>
+      <div class="form-group"><label>الكمية (USDT)</label><input type="number" id="edit-amount" step="0.01"></div>
+      <div class="form-group"><label>السعر (SDG/USDT)</label><input type="number" id="edit-price" step="0.01"></div>
+      <div class="form-group"><label>العمولة (SDG)</label><input type="number" id="edit-fee" step="0.01" placeholder="0"></div>
+      <div class="form-group"><label>ملاحظات</label><input type="text" id="edit-notes"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-gold" onclick="saveEdit()">💾 حفظ التعديل</button>
+    </div>
+  </div>
+</div>
+
+<!-- Account Edit Modal -->
+<div class="modal-overlay" id="acc-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ تعديل الحساب</div>
+    <input type="hidden" id="acc-edit-id">
+    <div class="form-grid">
+      <div class="form-group"><label>اسم الحساب</label><input type="text" id="acc-edit-name"></div>
+      <div class="form-group"><label>النوع / الوصف</label><input type="text" id="acc-edit-type"></div>
+      <div class="form-group"><label>الرصيد الحالي (SDG)</label><input type="number" id="acc-edit-balance" step="0.01"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAccModal()">إلغاء</button>
+      <button class="btn btn-gold" onclick="saveAccEdit()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase Setup Screen -->
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">SUDACASH</div>
+    <div class="setup-subtitle">أدخل بيانات Firebase للمزامنة السحابية</div>
+
+    <div class="setup-field">
+      <label>API Key</label>
+      <input type="text" id="fb-apiKey" placeholder="AIza...">
+    </div>
+    <div class="setup-field">
+      <label>Project ID</label>
+      <input type="text" id="fb-projectId" placeholder="sudacash">
+    </div>
+    <div class="setup-field">
+      <label>App ID</label>
+      <input type="text" id="fb-appId" placeholder="1:xxx:web:xxx">
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button class="btn btn-gold" style="flex:1" onclick="saveFirebaseConfig()">🚀 اتصال وبدء العمل</button>
+      <button class="btn btn-outline" onclick="useLocalOnly()" style="font-size:12px">بدون إنترنت</button>
+    </div>
+
+    <div class="setup-note">
+      💡 هذه البيانات من Firebase Console → Project Settings → Your apps<br>
+      🔒 تُحفظ محلياً على جهازك فقط ولا تُرسل لأي جهة
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div style="color:var(--text2);font-size:13px">جاري المزامنة...</div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ==================== FIREBASE INIT ====================
+let db = null;
+let unsubscribe = null;
+const DOC_ID = 'main';
+const COLLECTION = 'sudacash';
+
+window._firebase = { db: null, setDoc, doc, getDoc };
+
+function getSavedConfig() {
+  try { return JSON.parse(localStorage.getItem('sc_firebase_cfg') || 'null'); } catch { return null; }
+}
+
+async function initFirebase(cfg) {
+  try {
+    setSyncStatus('syncing', 'جاري الاتصال...');
+    const app = initializeApp(cfg, 'sudacash-' + Date.now());
+    db = getFirestore(app);
+    window._firebase.db = db;
+
+    // Try to read existing data first
+    showLoading(true);
+    const snap = await getDoc(doc(db, COLLECTION, DOC_ID));
+    if (snap.exists()) {
+      const remote = snap.data();
+      applyRemoteData(remote);
+      notify('☁️ تم تحميل البيانات من السحابة');
+    } else {
+      // Push local data to firebase
+      await pushToFirebase();
+    }
+    showLoading(false);
+
+    // Listen for real-time changes
+    if (unsubscribe) unsubscribe();
+    unsubscribe = onSnapshot(doc(db, COLLECTION, DOC_ID), (snap) => {
+      if (snap.exists() && !window._isSaving) {
+        applyRemoteData(snap.data());
+      }
+    });
+
+    setSyncStatus('synced', 'متزامن');
+    updateFirebaseStatusCard(true, cfg.projectId);
+    localStorage.setItem('sc_firebase_cfg', JSON.stringify(cfg));
+    document.getElementById('setup-screen').classList.remove('show');
+
+  } catch(e) {
+    showLoading(false);
+    setSyncStatus('offline', 'خطأ في الاتصال');
+    notify('❌ فشل الاتصال بـ Firebase: ' + e.message, 'var(--red)');
+    console.error(e);
+  }
+}
+
+window.pushToFirebase = async function() {
+  if (!db) return;
+  try {
+    window._isSaving = true;
+    setSyncStatus('syncing', 'جاري الحفظ...');
+    await setDoc(doc(db, COLLECTION, DOC_ID), {
+      trades: window._data.trades,
+      inventory: window._data.inventory,
+      settings: window._data.settings,
+      accounts: window._data.accounts,
+      updatedAt: new Date().toISOString()
+    });
+    setSyncStatus('synced', 'متزامن');
+    setTimeout(() => { window._isSaving = false; }, 1000);
+  } catch(e) {
+    setSyncStatus('offline', 'فشل الحفظ');
+    window._isSaving = false;
+    notify('⚠️ فشل في حفظ البيانات على السحابة', 'var(--red)');
+  }
+};
+
+function applyRemoteData(remote) {
+  if (remote.trades)    { window._data.trades    = remote.trades;    trades    = remote.trades; }
+  if (remote.inventory) { window._data.inventory = remote.inventory; inventory = remote.inventory; }
+  if (remote.settings)  { window._data.settings  = remote.settings;  settings  = remote.settings; }
+  if (remote.accounts)  { window._data.accounts  = remote.accounts;  accounts  = remote.accounts; }
+  // Refresh UI
+  populateAccountSelects();
+  renderDashboard();
+  updateHeader();
+  if (document.getElementById('tab-history').classList.contains('active')) renderHistory();
+  if (document.getElementById('tab-inventory').classList.contains('active')) renderInventory();
+  if (document.getElementById('tab-analytics').classList.contains('active')) renderAnalytics();
+}
+
+window.saveFirebaseConfig = function() {
+  const cfg = {
+    apiKey:            document.getElementById('fb-apiKey').value.trim(),
+    authDomain:        document.getElementById('fb-projectId').value.trim() + '.firebaseapp.com',
+    projectId:         document.getElementById('fb-projectId').value.trim(),
+    storageBucket:     document.getElementById('fb-projectId').value.trim() + '.appspot.com',
+    messagingSenderId: '562531232302',
+    appId:             document.getElementById('fb-appId').value.trim()
+  };
+  if (!cfg.apiKey || !cfg.projectId || !cfg.appId) {
+    notify('⚠️ أدخل جميع الحقول المطلوبة', 'var(--gold)'); return;
+  }
+  initFirebase(cfg);
+};
+
+window.useLocalOnly = function() {
+  document.getElementById('setup-screen').classList.remove('show');
+  setSyncStatus('offline', 'وضع محلي');
+  notify('⚠️ تعمل بدون مزامنة — البيانات محلية فقط', 'var(--gold)');
+};
+
+window.forcSync = async function() {
+  if (!db) { notify('⚠️ غير متصل بـ Firebase', 'var(--gold)'); return; }
+  await pushToFirebase();
+  notify('✅ تمت المزامنة');
+};
+
+function setSyncStatus(state, text) {
+  const el = document.getElementById('sync-status');
+  const tx = document.getElementById('sync-text');
+  el.className = 'sync-indicator ' + state;
+  tx.textContent = text;
+}
+
+function showLoading(show) {
+  document.getElementById('loading-overlay').classList.toggle('show', show);
+}
+
+function updateFirebaseStatusCard(connected, projectId) {
+  const el = document.getElementById('firebase-status-card');
+  if (connected) {
+    el.innerHTML = `<span style="color:var(--green)">✅ متصل بـ Firebase</span> — المشروع: <strong style="color:var(--gold)">${projectId}</strong><br><span style="font-size:11px;color:var(--text2)">بياناتك تتزامن تلقائياً بين كل أجهزتك</span>`;
+  } else {
+    el.innerHTML = `<span style="color:var(--red)">❌ غير متصل</span> — اضغط "تغيير إعدادات Firebase" للاتصال`;
+  }
+}
+
+window.showSetupScreen = function() {
+  const cfg = getSavedConfig();
+  if (cfg) {
+    document.getElementById('fb-apiKey').value   = cfg.apiKey    || '';
+    document.getElementById('fb-projectId').value= cfg.projectId || '';
+    document.getElementById('fb-appId').value    = cfg.appId     || '';
+  }
+  document.getElementById('setup-screen').classList.add('show');
+};
+
+// Auto-init on load
+const savedCfg = getSavedConfig();
+if (savedCfg) {
+  initFirebase(savedCfg);
+} else {
+  document.getElementById('setup-screen').classList.add('show');
+  setSyncStatus('offline', 'غير متصل');
+}
+
+</script>
+
+<script>
+// ==================== DATA ====================
+window._data = {};
+window._isSaving = false;
+
+let trades    = JSON.parse(localStorage.getItem('p2p_trades')    || '[]');
+let inventory = JSON.parse(localStorage.getItem('p2p_inventory') || JSON.stringify({ amount: 0, totalCost: 0 }));
+let settings  = JSON.parse(localStorage.getItem('p2p_settings')  || JSON.stringify({ initCash:0, initUSDT:0, initUSDTCost:0, cashBalance:0, defaultMargin:1.5 }));
+let accounts  = JSON.parse(localStorage.getItem('p2p_accounts')  || 'null');
+if (!accounts) {
+  accounts = [
+    { id: 'bk',     name: 'بنك الخرطوم', type: 'بنك',  balance: 0, initBalance: 0, color: '#1890FF' },
+    { id: 'faisal', name: 'بنك فيصل',    type: 'فوري', balance: 0, initBalance: 0, color: '#0ECB81' }
+  ];
+}
+
+let cashMoves = JSON.parse(localStorage.getItem('p2p_cash_moves') || '[]');
+
+// Keep _data in sync with local vars
+function syncData() {
+  window._data.trades    = trades;
+  window._data.inventory = inventory;
+  window._data.settings  = settings;
+  window._data.accounts  = accounts;
+  window._data.cashMoves = cashMoves;
+}
+syncData();
+
+// Init UI
+document.getElementById('buy-date').value      = today();
+document.getElementById('sell-date').value     = today();
+document.getElementById('cash-date').value     = today();
+document.getElementById('transfer-date').value = today();
+populateAccountSelects();
+loadSettingsForm();
+updateSellStock();
+renderDashboard();
+updateHeader();
+
+// ==================== UTILS ====================
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function save() {
+  // Save locally as backup
+  localStorage.setItem('p2p_trades',    JSON.stringify(trades));
+  localStorage.setItem('p2p_inventory', JSON.stringify(inventory));
+  localStorage.setItem('p2p_settings',  JSON.stringify(settings));
+  localStorage.setItem('p2p_accounts',  JSON.stringify(accounts));
+  localStorage.setItem('p2p_cash_moves', JSON.stringify(cashMoves));
+  localStorage.setItem('p2p_cash_moves', JSON.stringify(cashMoves));
+  // Sync _data and push to Firebase
+  syncData();
+  if (window.pushToFirebase) window.pushToFirebase();
+}
+
+function fmt(n, dec=0) {
+  if (n === undefined || n === null || isNaN(n)) return '-';
+  return Number(n).toLocaleString('ar-SA', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+function notify(msg, color='var(--green)') {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.style.borderColor = color; n.style.color = color;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+function getAccount(id) { return accounts.find(a => a.id === id) || null; }
+
+function accBadgeHTML(id) {
+  const a = getAccount(id);
+  if (!a) return '<span style="color:var(--text2)">—</span>';
+  const cls = id === 'bk' ? 'bk' : id === 'faisal' ? 'faisal' : 'other';
+  return `<span class="acc-badge ${cls}">🏦 ${a.name}</span>`;
+}
+
+// ==================== ACCOUNTS ====================
+function populateAccountSelects() {
+  ['buy-account','sell-account','edit-account','f-account','cash-account','transfer-from','transfer-to','cash-filter-acc'].forEach(sid => {
+    const el = document.getElementById(sid);
+    if (!el) return;
+    const isFilter = sid === 'f-account';
+    el.innerHTML = isFilter ? '<option value="">💳 كل الحسابات</option>' : '';
+    accounts.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.name} (${a.type})`;
+      el.appendChild(opt);
+    });
+  });
+}
+
+function renderAccountsList() {
+  const el = document.getElementById('accounts-list');
+  if (!el) return;
+  el.innerHTML = accounts.map(a => `
+    <div class="account-row">
+      <div class="account-row-dot" style="background:${a.color}"></div>
+      <div class="account-row-info">
+        <div class="account-row-name">${a.name}</div>
+        <div class="account-row-type">${a.type}</div>
+      </div>
+      <div class="account-row-balance">${fmt(a.balance)} SDG</div>
+      <button class="btn btn-outline btn-xs" onclick="openAccModal('${a.id}')">✏️ تعديل</button>
+      ${accounts.length > 1 ? `<button class="btn btn-red btn-xs" onclick="deleteAccount('${a.id}')">🗑</button>` : ''}
+    </div>
+  `).join('');
+}
+
+function addAccount() {
+  const name    = document.getElementById('new-acc-name').value.trim();
+  const type    = document.getElementById('new-acc-type').value.trim();
+  const balance = parseFloat(document.getElementById('new-acc-balance').value) || 0;
+  if (!name) { notify('⚠️ أدخل اسم الحساب', 'var(--gold)'); return; }
+  const colors = ['#9B59B6','#F0B429','#F6465D','#1890FF','#0ECB81'];
+  const color  = colors[accounts.length % colors.length];
+  accounts.push({ id: 'acc_' + Date.now(), name, type, balance, initBalance: balance, color });
+  save(); populateAccountSelects(); renderAccountsList(); updateHeader();
+  ['new-acc-name','new-acc-type','new-acc-balance'].forEach(id => document.getElementById(id).value = '');
+  notify('✅ تم إضافة الحساب: ' + name);
+}
+
+function deleteAccount(id) {
+  if (accounts.length <= 1) { notify('⚠️ يجب أن يكون هناك حساب واحد على الأقل', 'var(--red)'); return; }
+  if (!confirm('حذف هذا الحساب؟')) return;
+  accounts = accounts.filter(a => a.id !== id);
+  save(); populateAccountSelects(); renderAccountsList(); updateHeader();
+  notify('🗑 تم حذف الحساب');
+}
+
+function openAccModal(id) {
+  const a = getAccount(id); if (!a) return;
+  document.getElementById('acc-edit-id').value      = a.id;
+  document.getElementById('acc-edit-name').value    = a.name;
+  document.getElementById('acc-edit-type').value    = a.type;
+  document.getElementById('acc-edit-balance').value = a.balance;
+  document.getElementById('acc-modal').classList.add('show');
+}
+function closeAccModal() { document.getElementById('acc-modal').classList.remove('show'); }
+function saveAccEdit() {
+  const id = document.getElementById('acc-edit-id').value;
+  const a  = getAccount(id); if (!a) return;
+  a.name    = document.getElementById('acc-edit-name').value.trim()    || a.name;
+  a.type    = document.getElementById('acc-edit-type').value.trim()    || a.type;
+  a.balance = parseFloat(document.getElementById('acc-edit-balance').value) ?? a.balance;
+  save(); closeAccModal(); renderAccountsList(); populateAccountSelects(); updateHeader();
+  if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+  notify('✅ تم تحديث الحساب');
+}
+
+// ==================== TABS ====================
+function showTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'sell')      { prefillSellCost(); updateSellStock(); }
+  if (id === 'cash')      { renderCashSection(); }
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'history')   renderHistory();
+  if (id === 'inventory') renderInventory();
+  if (id === 'analytics') renderAnalytics();
+  if (id === 'settings')  { loadSettingsForm(); renderAccountsList(); }
+  if (id === 'cash')      { renderCashTab(); }
+}
+
+// ==================== BUY ====================
+function calcBuyTotal() {
+  const amt = parseFloat(document.getElementById('buy-amount').value) || 0;
+  const price = parseFloat(document.getElementById('buy-price').value) || 0;
+  if (amt && price) { document.getElementById('buy-total').value = (amt * price).toFixed(2); updateBuyPreview(); }
+}
+function calcBuyPrice() {
+  const amt = parseFloat(document.getElementById('buy-amount').value) || 0;
+  const total = parseFloat(document.getElementById('buy-total').value) || 0;
+  if (amt && total) { document.getElementById('buy-price').value = (total / amt).toFixed(2); updateBuyPreview(); }
+}
+function calcBuyFee() {
+  const total = parseFloat(document.getElementById('buy-total').value) || 0;
+  const fee   = parseFloat(document.getElementById('buy-fee-fixed').value) || 0;
+  if (total > 0) document.getElementById('buy-fee-pct').value = ((fee / total) * 100).toFixed(4);
+  updateBuyPreview();
+}
+function calcBuyFeePct() {
+  const total = parseFloat(document.getElementById('buy-total').value) || 0;
+  const pct   = parseFloat(document.getElementById('buy-fee-pct').value) || 0;
+  if (total > 0) document.getElementById('buy-fee-fixed').value = ((pct / 100) * total).toFixed(2);
+  updateBuyPreview();
+}
+function updateBuyPreview() {
+  const amt       = parseFloat(document.getElementById('buy-amount').value) || 0;
+  const price     = parseFloat(document.getElementById('buy-price').value) || 0;
+  const fee       = parseFloat(document.getElementById('buy-fee-fixed').value) || 0;
+  const accId     = document.getElementById('buy-account').value;
+  const total     = amt * price;
+  const realTotal = total + fee;
+  const realPrice = amt > 0 ? realTotal / amt : 0;
+  document.getElementById('bp-amount').textContent     = amt    ? fmt(amt, 2) + ' USDT' : '-';
+  document.getElementById('bp-price').textContent      = price  ? fmt(price, 2) + ' SDG' : '-';
+  document.getElementById('bp-total').textContent      = total  ? fmt(total, 2) + ' SDG' : '-';
+  document.getElementById('bp-fee').textContent        = fee > 0 ? fmt(fee, 2) + ' SDG' : '0 SDG';
+  document.getElementById('bp-real-total').textContent = total  ? fmt(realTotal, 2) + ' SDG' : '-';
+  document.getElementById('bp-real-price').textContent = realPrice ? fmt(realPrice, 2) + ' SDG/USDT' : '-';
+  const acc  = getAccount(accId);
+  const note = document.getElementById('buy-cash-note');
+  if (acc && acc.balance > 0) { note.textContent = `${acc.name} بعد الشراء: ${fmt(acc.balance - realTotal)} SDG`; }
+  else { note.textContent = ''; }
+}
+
+function addBuy() {
+  const date     = document.getElementById('buy-date').value;
+  const platform = document.getElementById('buy-platform').value;
+  const accId    = document.getElementById('buy-account').value;
+  const amount   = parseFloat(document.getElementById('buy-amount').value);
+  const price    = parseFloat(document.getElementById('buy-price').value);
+  const fee      = parseFloat(document.getElementById('buy-fee-fixed').value) || 0;
+  const notes    = document.getElementById('buy-notes').value;
+  if (!date || !amount || !price) { notify('⚠️ أكمل الحقول المطلوبة', 'var(--gold)'); return; }
+  const total     = amount * price;
+  const realTotal = total + fee;
+  const realPrice = realTotal / amount;
+  const trade = { id: Date.now(), date, type: 'buy', platform, accountId: accId, amount, price, total, fee, realTotal, realPrice, profit: 0, notes };
+  trades.push(trade);
+  inventory.amount    += amount;
+  inventory.totalCost += realTotal;
+  const acc = getAccount(accId);
+  if (acc) acc.balance -= realTotal;
+  save();
+  notify('✅ تم تسجيل الشراء | التكلفة الحقيقية: ' + fmt(realPrice, 2) + ' SDG/USDT');
+  ['buy-amount','buy-price','buy-total','buy-fee-fixed','buy-fee-pct','buy-notes'].forEach(id => document.getElementById(id).value = '');
+  updateBuyPreview(); updateHeader();
+}
+
+// ==================== SELL ====================
+function prefillSellCost() {
+  const avg = inventory.amount > 0 ? inventory.totalCost / inventory.amount : 0;
+  document.getElementById('sell-cost').value = avg > 0 ? avg.toFixed(2) : '';
+  calcSellProfit();
+}
+function updateSellStock() {
+  document.getElementById('sell-stock-avail').textContent = fmt(inventory.amount, 2) + ' USDT';
+}
+function calcSellProfit() {
+  const amt     = parseFloat(document.getElementById('sell-amount').value) || 0;
+  const price   = parseFloat(document.getElementById('sell-price').value) || 0;
+  const cost    = parseFloat(document.getElementById('sell-cost').value) || 0;
+  const revenue = amt * price;
+  const costT   = amt * cost;
+  const profit  = revenue - costT;
+  const margin  = cost > 0 ? ((price - cost) / cost * 100) : 0;
+  document.getElementById('sp-revenue').textContent = amt && price ? fmt(revenue, 2) + ' SDG' : '-';
+  document.getElementById('sp-cost').textContent    = amt && cost  ? fmt(costT, 2) + ' SDG' : '-';
+  document.getElementById('sp-margin').textContent  = cost > 0 ? fmt(margin, 2) + '%' : '-';
+  const pr = document.getElementById('sp-profit');
+  if (amt && price && cost) {
+    pr.textContent = fmt(profit, 2) + ' SDG';
+    pr.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('sp-profit-row').className = 'calc-row total' + (profit < 0 ? ' loss' : '');
+  } else { pr.textContent = '-'; }
+}
+
+function addSell() {
+  const date     = document.getElementById('sell-date').value;
+  const platform = document.getElementById('sell-platform').value;
+  const accId    = document.getElementById('sell-account').value;
+  const amount   = parseFloat(document.getElementById('sell-amount').value);
+  const price    = parseFloat(document.getElementById('sell-price').value);
+  const cost     = parseFloat(document.getElementById('sell-cost').value);
+  const notes    = document.getElementById('sell-notes').value;
+  if (!date || !amount || !price || !cost) { notify('⚠️ أكمل الحقول المطلوبة', 'var(--gold)'); return; }
+  if (amount > inventory.amount + 0.01) { notify('⚠️ الكمية أكبر من المخزون (' + fmt(inventory.amount, 2) + ' USDT)', 'var(--red)'); return; }
+  const total  = amount * price;
+  const profit = total - (amount * cost);
+  const trade  = { id: Date.now(), date, type: 'sell', platform, accountId: accId, amount, price, total, fee: 0, realTotal: total, realPrice: price, profit, cost, notes };
+  trades.push(trade);
+  const ratio = inventory.amount > 0 ? 1 - (amount / inventory.amount) : 0;
+  inventory.totalCost = inventory.totalCost * ratio;
+  inventory.amount   -= amount;
+  if (inventory.amount < 0.001) { inventory.amount = 0; inventory.totalCost = 0; }
+  const acc = getAccount(accId);
+  if (acc) acc.balance += total;
+  save();
+  notify('🔴 تم البيع | الربح: ' + fmt(profit, 2) + ' SDG');
+  ['sell-amount','sell-price','sell-notes'].forEach(id => document.getElementById(id).value = '');
+  updateSellStock(); updateHeader();
+}
+
+// ==================== DASHBOARD ====================
+function renderDashboard() {
+  const sells      = trades.filter(t => t.type === 'sell');
+  const buys       = trades.filter(t => t.type === 'buy');
+  const totalProfit    = sells.reduce((s, t) => s + t.profit, 0);
+  const totalBought    = buys.reduce((s, t) => s + t.amount, 0);
+  const totalBoughtSDG = buys.reduce((s, t) => s + t.total, 0);
+  const totalSold      = sells.reduce((s, t) => s + t.amount, 0);
+  const totalSoldSDG   = sells.reduce((s, t) => s + t.total, 0);
+  const avgMargin = sells.length > 0 ? sells.reduce((s, t) => s + (t.cost ? (t.price - t.cost) / t.cost * 100 : 0), 0) / sells.length : 0;
+  const avgCost    = inventory.amount > 0 ? inventory.totalCost / inventory.amount : 0;
+  const stockSDG   = inventory.amount * avgCost;
+  const totalCash  = accounts.reduce((s, a) => s + a.balance, 0);
+  const totalCap   = totalCash + stockSDG;
+  const initCash   = accounts.reduce((s, a) => s + (a.initBalance || 0), 0);
+  const initCap    = initCash + (settings.initUSDT * settings.initUSDTCost);
+  const growth     = initCap > 0 ? ((totalCap - initCap) / initCap * 100) : null;
+
+  const banner = document.getElementById('accounts-banner');
+  let bannerHTML = accounts.map(a => `
+    <div class="account-card ${a.id === 'bk' ? 'bk' : a.id === 'faisal' ? 'faisal' : ''}" style="${a.id!=='bk'&&a.id!=='faisal'?'border-right: 4px solid '+a.color+';':''}">
+      <div class="account-card-label">💳 ${a.type}</div>
+      <div class="account-card-name">${a.name}</div>
+      <div class="account-card-balance" style="${a.id!=='bk'&&a.id!=='faisal'?'color:'+a.color:''}">${fmt(a.balance)} SDG</div>
+      <div class="account-card-type">رصيد ابتدائي: ${fmt(a.initBalance || 0)} SDG</div>
+    </div>
+  `).join('');
+  bannerHTML += `<div class="account-card account-card-total"><div class="account-card-label">💰 إجمالي النقدية</div><div class="account-card-name">كل الحسابات</div><div class="account-card-balance">${fmt(totalCash)} SDG</div><div class="account-card-type">رأس المال الكلي: ${fmt(totalCap)} SDG</div></div>`;
+  banner.innerHTML = bannerHTML;
+
+  document.getElementById('d-stock').textContent        = fmt(inventory.amount, 2) + ' USDT';
+  document.getElementById('d-stock-sdg').textContent    = '≈ ' + fmt(stockSDG) + ' SDG';
+  document.getElementById('d-profit').textContent       = fmt(totalProfit) + ' SDG';
+  document.getElementById('d-profit-usdt').textContent  = avgCost > 0 ? '≈ ' + fmt(totalProfit / avgCost, 2) + ' USDT' : '';
+  document.getElementById('d-trades').textContent       = trades.length;
+  document.getElementById('d-trades-split').textContent = 'شراء: ' + buys.length + ' | بيع: ' + sells.length;
+  document.getElementById('d-margin').textContent       = fmt(avgMargin, 2) + '%';
+  document.getElementById('d-total-bought').textContent     = fmt(totalBought, 2) + ' USDT';
+  document.getElementById('d-total-bought-sdg').textContent = '= ' + fmt(totalBoughtSDG) + ' SDG';
+  document.getElementById('d-total-sold').textContent       = fmt(totalSold, 2) + ' USDT';
+  document.getElementById('d-total-sold-sdg').textContent   = '= ' + fmt(totalSoldSDG) + ' SDG';
+  document.getElementById('d-total-capital').textContent    = fmt(totalCap) + ' SDG';
+  const growthEl = document.getElementById('d-growth');
+  if (growth !== null) {
+    growthEl.textContent = 'نمو: ' + (growth >= 0 ? '+' : '') + fmt(growth, 2) + '%';
+    growthEl.style.color = growth >= 0 ? 'var(--green)' : 'var(--red)';
+  } else { growthEl.textContent = 'نمو: —'; growthEl.style.color = 'var(--text2)'; }
+
+  const recent = [...trades].reverse().slice(0, 8);
+  const tbody  = document.getElementById('recent-trades');
+  if (!recent.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">📭</div>لا توجد صفقات بعد</td></tr>'; return; }
+  tbody.innerHTML = recent.map(t => `
+    <tr>
+      <td>${t.date}</td>
+      <td><span class="badge ${t.type==='buy'?'badge-green':'badge-red'}">${t.type==='buy'?'شراء':'بيع'}</span></td>
+      <td><span class="platform ${t.platform.toLowerCase()}">${t.platform}</span></td>
+      <td>${accBadgeHTML(t.accountId)}</td>
+      <td>${fmt(t.amount,2)}</td>
+      <td>${fmt(t.price,2)}</td>
+      <td>${fmt(t.total,2)}</td>
+      <td style="color:var(--red)">${t.fee>0?fmt(t.fee,2):'-'}</td>
+      <td style="color:${t.profit>0?'var(--green)':t.profit<0?'var(--red)':'var(--text2)'}">${t.type==='sell'?fmt(t.profit,2):'-'}</td>
+    </tr>
+  `).join('');
+}
+
+// ==================== HISTORY ====================
+let filterType = 'all';
+function setFilter(type, el) {
+  filterType = type;
+  document.querySelectorAll('.filter-bar .btn').forEach(b => b.classList.remove('active-filter'));
+  if (el) el.classList.add('active-filter');
+  renderHistory();
+}
+function clearFilters() {
+  filterType = 'all';
+  ['f-platform','f-from','f-to'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-account').value = '';
+  document.querySelectorAll('.filter-bar .btn').forEach(b => b.classList.remove('active-filter'));
+  document.getElementById('f-all').classList.add('active-filter');
+  renderHistory();
+}
+function renderHistory() {
+  let list = [...trades];
+  if (filterType !== 'all') list = list.filter(t => t.type === filterType);
+  const plat = document.getElementById('f-platform').value.trim().toLowerCase();
+  if (plat) list = list.filter(t => t.platform.toLowerCase().includes(plat));
+  const fAcc = document.getElementById('f-account').value;
+  if (fAcc) list = list.filter(t => t.accountId === fAcc);
+  const from = document.getElementById('f-from').value;
+  const to   = document.getElementById('f-to').value;
+  if (from) list = list.filter(t => t.date >= from);
+  if (to)   list = list.filter(t => t.date <= to);
+  const tbody = document.getElementById('trades-table');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="13" class="empty"><div class="empty-icon">📭</div>لا توجد صفقات</td></tr>'; return; }
+  tbody.innerHTML = [...list].reverse().map((t, i) => `
+    <tr>
+      <td style="color:var(--text2)">${list.length - i}</td>
+      <td>${t.date}</td>
+      <td><span class="badge ${t.type==='buy'?'badge-green':'badge-red'}">${t.type==='buy'?'شراء':'بيع'}</span></td>
+      <td><span class="platform ${t.platform.toLowerCase()}">${t.platform}</span></td>
+      <td>${accBadgeHTML(t.accountId)}</td>
+      <td>${fmt(t.amount,2)}</td>
+      <td>${fmt(t.price,2)}</td>
+      <td>${fmt(t.total,2)}</td>
+      <td style="color:var(--red)">${t.fee>0?fmt(t.fee,2):'-'}</td>
+      <td style="color:var(--blue)">${t.type==='buy'&&t.realPrice?fmt(t.realPrice,2):'-'}</td>
+      <td style="color:${t.profit>0?'var(--green)':t.profit<0?'var(--red)':'var(--text2)'}">${t.type==='sell'?fmt(t.profit,2):'-'}</td>
+      <td style="font-size:11px;color:var(--text2)">${t.notes||'-'}</td>
+      <td><div style="display:flex;gap:4px"><button class="btn btn-outline btn-xs" onclick="openEdit(${t.id})">✏️</button><button class="btn btn-red btn-xs" onclick="deleteTrade(${t.id})">🗑</button></div></td>
+    </tr>
+  `).join('');
+}
+
+function deleteTrade(id) {
+  if (!confirm('هل تريد حذف هذه الصفقة؟')) return;
+  const t = trades.find(x => x.id === id);
+  if (t) {
+    if (t.type === 'buy') {
+      inventory.amount    -= t.amount;
+      inventory.totalCost -= t.realTotal;
+      if (inventory.amount < 0.001) { inventory.amount = 0; inventory.totalCost = 0; }
+      const acc = getAccount(t.accountId);
+      if (acc) acc.balance += t.realTotal;
+    } else {
+      inventory.amount    += t.amount;
+      inventory.totalCost += t.amount * (t.cost || 0);
+      const acc = getAccount(t.accountId);
+      if (acc) acc.balance -= t.total;
+    }
+  }
+  trades = trades.filter(x => x.id !== id);
+  save(); renderHistory(); updateHeader();
+  notify('🗑 تم حذف الصفقة');
+}
+
+function clearAll() {
+  if (!confirm('حذف جميع الصفقات؟ لا يمكن التراجع.')) return;
+  trades = [];
+  inventory = { amount: 0, totalCost: 0 };
+  accounts.forEach(a => a.balance = a.initBalance || 0);
+  save(); renderHistory(); updateHeader();
+  notify('🗑 تم حذف جميع الصفقات');
+}
+
+// ==================== EDIT MODAL ====================
+function openEdit(id) {
+  const t = trades.find(x => x.id === id); if (!t) return;
+  document.getElementById('edit-id').value       = t.id;
+  document.getElementById('edit-date').value     = t.date;
+  document.getElementById('edit-platform').value = t.platform;
+  document.getElementById('edit-account').value  = t.accountId || '';
+  document.getElementById('edit-amount').value   = t.amount;
+  document.getElementById('edit-price').value    = t.price;
+  document.getElementById('edit-fee').value      = t.fee || 0;
+  document.getElementById('edit-notes').value    = t.notes || '';
+  document.getElementById('edit-modal').classList.add('show');
+}
+function closeModal() { document.getElementById('edit-modal').classList.remove('show'); }
+function saveEdit() {
+  const id  = parseInt(document.getElementById('edit-id').value);
+  const idx = trades.findIndex(x => x.id === id); if (idx < 0) return;
+  const t   = trades[idx];
+  const oldRealTotal = t.realTotal || t.total;
+  const oldAccId     = t.accountId;
+  t.date      = document.getElementById('edit-date').value;
+  t.platform  = document.getElementById('edit-platform').value;
+  t.accountId = document.getElementById('edit-account').value;
+  t.amount    = parseFloat(document.getElementById('edit-amount').value) || t.amount;
+  t.price     = parseFloat(document.getElementById('edit-price').value)  || t.price;
+  t.fee       = parseFloat(document.getElementById('edit-fee').value)    || 0;
+  t.notes     = document.getElementById('edit-notes').value;
+  t.total     = t.amount * t.price;
+  t.realTotal = t.total + t.fee;
+  t.realPrice = t.amount > 0 ? t.realTotal / t.amount : 0;
+  if (t.type === 'sell') t.profit = t.total - (t.amount * (t.cost || 0));
+  if (t.type === 'buy') {
+    inventory.totalCost = inventory.totalCost - oldRealTotal + t.realTotal;
+    const oldAcc = getAccount(oldAccId);
+    const newAcc = getAccount(t.accountId);
+    if (oldAcc) oldAcc.balance += oldRealTotal;
+    if (newAcc) newAcc.balance -= t.realTotal;
+  }
+  save(); closeModal(); renderHistory(); updateHeader();
+  notify('✅ تم حفظ التعديل');
+}
+
+// ==================== INVENTORY ====================
+function renderInventory() {
+  const avgCost = inventory.amount > 0 ? inventory.totalCost / inventory.amount : 0;
+  const margin  = settings.defaultMargin || 1.5;
+  document.getElementById('inv-stock').textContent      = fmt(inventory.amount, 2) + ' USDT';
+  document.getElementById('inv-stock-sdg').textContent  = 'بتكلفة حقيقية: ' + fmt(inventory.totalCost) + ' SDG';
+  document.getElementById('inv-avg-cost').textContent   = fmt(avgCost, 2) + ' SDG';
+  document.getElementById('inv-suggest').textContent    = fmt(avgCost * (1 + margin/100), 2) + ' SDG';
+  document.getElementById('inv-suggest-pct').textContent= `بهامش ${margin}% من التكلفة`;
+  const buys = trades.filter(t => t.type === 'buy');
+  const tbody = document.getElementById('inventory-table');
+  if (!buys.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty"><div class="empty-icon">📦</div>لا توجد مشتريات</td></tr>'; return; }
+  tbody.innerHTML = [...buys].reverse().map(t => `
+    <tr>
+      <td>${t.date}</td>
+      <td><span class="platform ${t.platform.toLowerCase()}">${t.platform}</span></td>
+      <td>${accBadgeHTML(t.accountId)}</td>
+      <td>${fmt(t.amount,2)}</td>
+      <td>${fmt(t.price,2)}</td>
+      <td>${fmt(t.total,2)}</td>
+      <td style="color:var(--red)">${t.fee>0?fmt(t.fee,2):'0'}</td>
+      <td style="color:var(--blue)">${fmt(t.realPrice||t.price,2)}</td>
+    </tr>
+  `).join('');
+}
+function adjustInventory() {
+  const amount = parseFloat(document.getElementById('adj-amount').value);
+  const cost   = parseFloat(document.getElementById('adj-cost').value);
+  if (!amount || !cost) { notify('أدخل الكمية والتكلفة', 'var(--gold)'); return; }
+  inventory.amount = amount; inventory.totalCost = amount * cost;
+  save(); renderInventory(); updateHeader();
+  notify('✅ تم تحديث المخزون');
+}
+
+// ==================== CALCULATOR ====================
+function calcHelper() {
+  const amt    = parseFloat(document.getElementById('c-amount').value) || 0;
+  const buy    = parseFloat(document.getElementById('c-buy').value)    || 0;
+  const fee    = parseFloat(document.getElementById('c-fee').value)    || 0;
+  const margin = parseFloat(document.getElementById('c-margin').value) || 0;
+  if (amt && buy) {
+    const totalCost = amt * buy;
+    const realTotal = totalCost + fee;
+    const realPrice = realTotal / amt;
+    const sellPrice = realPrice * (1 + margin / 100);
+    const profit    = (sellPrice - realPrice) * amt;
+    document.getElementById('c-total-cost').textContent = fmt(totalCost, 2) + ' SDG';
+    document.getElementById('c-fee-val').textContent    = fee > 0 ? fmt(fee, 2) + ' SDG' : '0 SDG';
+    document.getElementById('c-real-price').textContent = fmt(realPrice, 2) + ' SDG/USDT';
+    document.getElementById('c-sell-price').textContent = margin ? fmt(sellPrice, 2) + ' SDG/USDT' : '-';
+    document.getElementById('c-net').textContent        = margin ? fmt(profit, 2) + ' SDG' : '-';
+  }
+}
+function calcMargin() {
+  const buy  = parseFloat(document.getElementById('m-buy').value)    || 0;
+  const sell = parseFloat(document.getElementById('m-sell').value)   || 0;
+  const amt  = parseFloat(document.getElementById('m-amount').value) || 0;
+  const fee  = parseFloat(document.getElementById('m-fee').value)    || 0;
+  if (buy && sell) {
+    const spread = sell - buy;
+    const pct    = (spread / buy) * 100;
+    const gross  = amt * spread;
+    const net    = gross - fee;
+    document.getElementById('m-spread').textContent = fmt(spread, 2) + ' SDG';
+    document.getElementById('m-pct').textContent    = fmt(pct, 3) + '%';
+    document.getElementById('m-gross').textContent  = amt ? fmt(gross, 2) + ' SDG' : '-';
+    document.getElementById('m-total').textContent  = amt ? fmt(net, 2) + ' SDG' : '-';
+    document.getElementById('m-total').style.color  = net >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+}
+
+// ==================== ANALYTICS ====================
+function renderAnalytics() {
+  const sells    = trades.filter(t => t.type === 'sell');
+  const buys     = trades.filter(t => t.type === 'buy');
+  const totalFees= buys.reduce((s, t) => s + (t.fee || 0), 0);
+  const byDay = {};
+  sells.forEach(t => { byDay[t.date] = (byDay[t.date] || 0) + t.profit; });
+  const bestDay = Object.entries(byDay).sort((a, b) => b[1] - a[1])[0];
+  document.getElementById('a-best-day').textContent        = bestDay ? bestDay[0] : '—';
+  document.getElementById('a-best-day-profit').textContent = bestDay ? fmt(bestDay[1]) + ' SDG' : '';
+  const byPlat = {};
+  trades.forEach(t => { byPlat[t.platform] = (byPlat[t.platform] || 0) + 1; });
+  const topPlat = Object.entries(byPlat).sort((a, b) => b[1] - a[1])[0];
+  document.getElementById('a-top-platform').textContent       = topPlat ? topPlat[0] : '—';
+  document.getElementById('a-top-platform-count').textContent = topPlat ? topPlat[1] + ' صفقة' : '';
+  const avgSize = trades.length > 0 ? trades.reduce((s, t) => s + t.amount, 0) / trades.length : 0;
+  document.getElementById('a-avg-size').textContent   = avgSize > 0 ? fmt(avgSize, 2) : '—';
+  document.getElementById('a-total-fees').textContent = fmt(totalFees);
+  const maxMargin = sells.length > 0 ? sells.reduce((best, t) => { const m = t.cost > 0 ? (t.price - t.cost) / t.cost * 100 : 0; return m > (best.m || 0) ? { m, t } : best; }, {}) : {};
+  document.getElementById('a-max-margin').textContent      = maxMargin.m ? fmt(maxMargin.m, 3) + '%' : '—';
+  document.getElementById('a-max-margin-date').textContent = maxMargin.t ? maxMargin.t.date : '';
+  const maxSell = sells.length > 0 ? sells.reduce((best, t) => t.profit > (best.profit || -Infinity) ? t : best, {}) : {};
+  document.getElementById('a-max-sell').textContent      = maxSell.profit !== undefined ? fmt(maxSell.profit) + ' SDG' : '—';
+  document.getElementById('a-max-sell-date').textContent = maxSell.date || '';
+  const days = new Set(trades.map(t => t.date));
+  document.getElementById('a-trading-days').textContent = days.size;
+  const totalProfit = sells.reduce((s, t) => s + t.profit, 0);
+  const sellDays    = new Set(sells.map(t => t.date));
+  document.getElementById('a-daily-profit').textContent = sellDays.size > 0 ? fmt(totalProfit / sellDays.size) + ' SDG' : '—';
+
+  const pb = document.getElementById('platform-breakdown');
+  if (!trades.length) { pb.innerHTML = '<div style="color:var(--text2);text-align:center;padding:20px">لا توجد صفقات بعد</div>'; }
+  else {
+    pb.innerHTML = ['Binance','OKX'].map(p => {
+      const ptrades = trades.filter(t => t.platform === p);
+      const psells  = sells.filter(t => t.platform === p);
+      const pprofit = psells.reduce((s, t) => s + t.profit, 0);
+      const pct     = trades.length > 0 ? (ptrades.length / trades.length * 100) : 0;
+      if (!ptrades.length) return '';
+      return `<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span class="platform ${p.toLowerCase()}" style="font-size:14px">${p}</span><span style="font-size:13px;color:var(--text2)">${ptrades.length} صفقة (${fmt(pct,1)}%)</span></div><div style="background:var(--bg3);border-radius:4px;height:8px;overflow:hidden"><div style="background:${p==='Binance'?'var(--gold)':'#e0e0e0'};width:${pct}%;height:100%;border-radius:4px;transition:width 0.5s"></div></div><div style="font-size:12px;color:var(--text2);margin-top:4px">ربح: <span style="color:var(--green)">${fmt(pprofit)} SDG</span></div></div>`;
+    }).join('');
+  }
+
+  const ab = document.getElementById('account-breakdown');
+  if (!sells.length) { ab.innerHTML = '<div style="color:var(--text2);text-align:center;padding:20px">لا توجد مبيعات بعد</div>'; }
+  else {
+    ab.innerHTML = accounts.map(a => {
+      const aSells  = sells.filter(t => t.accountId === a.id);
+      const aprofit = aSells.reduce((s, t) => s + t.profit, 0);
+      const pct     = sells.length > 0 ? (aSells.length / sells.length * 100) : 0;
+      if (!aSells.length) return '';
+      return `<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:14px;font-weight:700;color:${a.color}">${a.name}</span><span style="font-size:13px;color:var(--text2)">${aSells.length} صفقة (${fmt(pct,1)}%)</span></div><div style="background:var(--bg3);border-radius:4px;height:8px;overflow:hidden"><div style="background:${a.color};width:${pct}%;height:100%;border-radius:4px;transition:width 0.5s"></div></div><div style="font-size:12px;color:var(--text2);margin-top:4px">ربح: <span style="color:var(--green)">${fmt(aprofit)} SDG</span> | رصيد: <span style="color:${a.color}">${fmt(a.balance)} SDG</span></div></div>`;
+    }).join('') || '<div style="color:var(--text2);text-align:center;padding:20px">لا توجد مبيعات مرتبطة بحسابات</div>';
+  }
+
+  const top5 = [...sells].sort((a, b) => b.profit - a.profit).slice(0, 5);
+  document.getElementById('top-trades').innerHTML = top5.length ? top5.map((t, i) => `
+    <tr>
+      <td style="color:var(--gold)">${i+1}</td>
+      <td>${t.date}</td>
+      <td>${fmt(t.amount,2)}</td>
+      <td style="color:var(--blue)">${t.cost>0?fmt((t.price-t.cost)/t.cost*100,3)+'%':'-'}</td>
+      <td style="color:var(--green)">${fmt(t.profit,2)}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="5" class="empty" style="padding:20px">لا توجد مبيعات</td></tr>';
+}
+
+// ==================== SETTINGS ====================
+function loadSettingsForm() {
+  document.getElementById('s-init-usdt').value      = settings.initUSDT || '';
+  document.getElementById('s-init-usdt-cost').value = settings.initUSDTCost || '';
+  document.getElementById('s-default-margin').value = settings.defaultMargin || 1.5;
+  renderAccountsList();
+  const initCash = accounts.reduce((s, a) => s + (a.initBalance || 0), 0);
+  const initCap  = initCash + (settings.initUSDT * settings.initUSDTCost);
+  const totalCash= accounts.reduce((s, a) => s + a.balance, 0);
+  if (initCap > 0) {
+    document.getElementById('s-opening-display').innerHTML =
+      `✅ رأس المال الابتدائي: <strong style="color:var(--gold)">${fmt(initCap)} SDG</strong> | إجمالي النقدية الحالية: <strong style="color:var(--green)">${fmt(totalCash)} SDG</strong>`;
+  }
+}
+function saveOpeningBalance() {
+  const initUSDT     = parseFloat(document.getElementById('s-init-usdt').value) || 0;
+  const initUSDTCost = parseFloat(document.getElementById('s-init-usdt-cost').value) || 0;
+  settings.initUSDT     = initUSDT;
+  settings.initUSDTCost = initUSDTCost;
+  if (initUSDT > 0 && initUSDTCost > 0 && inventory.amount === 0) {
+    inventory.amount    = initUSDT;
+    inventory.totalCost = initUSDT * initUSDTCost;
+  }
+  save(); loadSettingsForm(); updateHeader();
+  notify('✅ تم حفظ البيانات الابتدائية');
+}
+function saveDefaultMargin() {
+  const m = parseFloat(document.getElementById('s-default-margin').value);
+  if (!m || m <= 0) { notify('⚠️ أدخل نسبة صحيحة', 'var(--gold)'); return; }
+  settings.defaultMargin = m;
+  save();
+  notify('✅ تم حفظ هامش الربح الافتراضي: ' + m + '%');
+}
+
+// ==================== HEADER ====================
+function updateHeader() {
+  const totalProfit = trades.filter(t => t.type === 'sell').reduce((s, t) => s + t.profit, 0);
+  const bk     = getAccount('bk');
+  const faisal = getAccount('faisal');
+  document.getElementById('h-bk').textContent     = bk     ? fmt(bk.balance) + ' SDG' : '—';
+  document.getElementById('h-faisal').textContent = faisal ? fmt(faisal.balance) + ' SDG' : '—';
+  document.getElementById('h-stock').textContent  = fmt(inventory.amount, 2) + ' USDT';
+  document.getElementById('h-profit').textContent = fmt(totalProfit) + ' SDG';
+  document.getElementById('h-trades').textContent = trades.length;
+}
+
+// ==================== CASH MANAGEMENT ====================
+
+function renderCashTab() {
+  // Refresh account selects
+  populateAccountSelects();
+
+  // Accounts banner in cash tab
+  const banner = document.getElementById('cash-accounts-banner');
+  if (banner) {
+    let html = accounts.map(a => `
+      <div class="account-card ${a.id==='bk'?'bk':a.id==='faisal'?'faisal':''}" style="${a.id!=='bk'&&a.id!=='faisal'?'border-right:4px solid '+a.color:''}">
+        <div class="account-card-label">💳 ${a.type}</div>
+        <div class="account-card-name">${a.name}</div>
+        <div class="account-card-balance" style="${a.id!=='bk'&&a.id!=='faisal'?'color:'+a.color:''}">${fmt(a.balance)} SDG</div>
+      </div>
+    `).join('');
+    const total = accounts.reduce((s,a) => s + a.balance, 0);
+    html += `<div class="account-card account-card-total">
+      <div class="account-card-label">💰 الإجمالي</div>
+      <div class="account-card-name">كل الحسابات</div>
+      <div class="account-card-balance">${fmt(total)} SDG</div>
+    </div>`;
+    banner.innerHTML = html;
+  }
+
+  // Render log
+  renderCashLog();
+}
+
+
+
+
+function deleteCashMove(id) {
+  if (!confirm('حذف هذه الحركة؟')) return;
+  const m = cashMoves.find(x => x.id === id);
+  if (m) {
+    // Reverse the balance effect
+    const acc = getAccount(m.accountId);
+    if (acc) {
+      if (m.type === 'deposit' || m.type === 'transfer-in')  acc.balance -= m.amount;
+      if (m.type === 'withdraw' || m.type === 'transfer-out') acc.balance += m.amount;
+    }
+  }
+  cashMoves = cashMoves.filter(x => x.id !== id);
+  save(); updateHeader(); renderCashLog();
+  notify('🗑 تم حذف الحركة');
+}
+
+function clearCashLog() {
+  if (!confirm('مسح كامل سجل حركات النقدية؟ لن يتأثر الرصيد الحالي.')) return;
+  cashMoves = [];
+  save(); renderCashLog();
+  notify('🗑 تم مسح السجل');
+}
+
+
+// ==================== CASH MANAGEMENT ====================
+
+function renderCashSection() {
+  // mini accounts banner
+  const el = document.getElementById('cash-accounts-banner');
+  if (el) {
+    el.innerHTML = accounts.map(a => `
+      <div class="account-card ${a.id==='bk'?'bk':a.id==='faisal'?'faisal':''}" style="${a.id!=='bk'&&a.id!=='faisal'?'border-right:4px solid '+a.color:''}">
+        <div class="account-card-label">💳 ${a.type}</div>
+        <div class="account-card-name">${a.name}</div>
+        <div class="account-card-balance" style="${a.id!=='bk'&&a.id!=='faisal'?'color:'+a.color:''}">${fmt(a.balance)} SDG</div>
+      </div>
+    `).join('') + `
+      <div class="account-card account-card-total">
+        <div class="account-card-label">💰 الإجمالي</div>
+        <div class="account-card-name">كل الحسابات</div>
+        <div class="account-card-balance">${fmt(accounts.reduce((s,a)=>s+a.balance,0))} SDG</div>
+      </div>`;
+  }
+  renderCashLog();
+}
+
+function updateCashType() { calcCashPreview(); }
+
+function calcCashPreview() {
+  const accId  = document.getElementById('cash-account').value;
+  const type   = document.getElementById('cash-type').value;
+  const amount = parseFloat(document.getElementById('cash-amount').value) || 0;
+  const fee    = type === 'withdraw' ? (parseFloat(document.getElementById('cash-fee').value) || 0) : 0;
+  const acc    = getAccount(accId);
+  // Show/hide fee field
+  const feeGroup = document.getElementById('cash-fee-group');
+  if (feeGroup) feeGroup.style.display = type === 'withdraw' ? 'flex' : 'none';
+  if (!acc) return;
+  const total = amount + fee;
+  const after = type === 'deposit' ? acc.balance + amount : acc.balance - total;
+  document.getElementById('cp-before').textContent = fmt(acc.balance) + ' SDG';
+  document.getElementById('cp-amount').textContent = (type==='deposit'?'+':'-') + fmt(amount) + ' SDG';
+  document.getElementById('cp-amount').style.color = type==='deposit'?'var(--green)':'var(--red)';
+  const feeEl = document.getElementById('cp-fee');
+  if (feeEl) { feeEl.textContent = fee > 0 ? '-' + fmt(fee) + ' SDG' : '—'; feeEl.style.color = fee > 0 ? 'var(--red)' : 'var(--text2)'; }
+  document.getElementById('cp-after').textContent  = fmt(after) + ' SDG';
+  document.getElementById('cp-after').style.color  = after >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function addCashEntry() {
+  const date   = document.getElementById('cash-date').value;
+  const accId  = document.getElementById('cash-account').value;
+  const type   = document.getElementById('cash-type').value;
+  const amount = parseFloat(document.getElementById('cash-amount').value);
+  const fee    = type === 'withdraw' ? (parseFloat(document.getElementById('cash-fee').value) || 0) : 0;
+  const notes  = document.getElementById('cash-notes').value;
+  if (!date || !amount || amount <= 0) { notify('⚠️ أكمل الحقول المطلوبة', 'var(--gold)'); return; }
+  const acc = getAccount(accId);
+  if (!acc) return;
+  const totalDeduct = amount + fee;
+  if (type === 'withdraw' && totalDeduct > acc.balance) {
+    notify('⚠️ الرصيد غير كافٍ — المتاح: ' + fmt(acc.balance) + ' SDG', 'var(--red)'); return;
+  }
+  if (type === 'deposit') acc.balance += amount;
+  else acc.balance -= totalDeduct;
+  const entry = {
+    id: Date.now(), date, type, accountId: accId,
+    amount, fee, balanceAfter: acc.balance, notes
+  };
+  cashMoves.push(entry);
+  save();
+  renderCashSection(); updateHeader();
+  if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+  ['cash-amount','cash-notes','cash-fee'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  calcCashPreview();
+  const msg = type === 'deposit'
+    ? '✅ تم الإيداع: +' + fmt(amount) + ' SDG'
+    : '✅ تم السحب: -' + fmt(amount) + ' SDG' + (fee > 0 ? ' (عمولة: ' + fmt(fee) + ' SDG)' : '');
+  notify(msg);
+}
+
+function calcTransferPreview() {
+  const fromId = document.getElementById('transfer-from').value;
+  const amount = parseFloat(document.getElementById('transfer-amount').value) || 0;
+  const fee    = parseFloat(document.getElementById('transfer-fee').value) || 0;
+  const from   = getAccount(fromId);
+  const totalDeduct = amount + fee;
+  const fromAfter   = from ? from.balance - totalDeduct : 0;
+  document.getElementById('tp-amount').textContent       = amount ? fmt(amount) + ' SDG' : '-';
+  document.getElementById('tp-fee').textContent          = fee > 0 ? fmt(fee) + ' SDG' : '0 SDG';
+  document.getElementById('tp-total-deduct').textContent = totalDeduct ? fmt(totalDeduct) + ' SDG' : '-';
+  document.getElementById('tp-received').textContent     = amount ? fmt(amount) + ' SDG' : '-';
+  document.getElementById('tp-from-after').textContent   = from ? fmt(fromAfter) + ' SDG' : '-';
+  document.getElementById('tp-from-after').style.color   = fromAfter >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function addTransfer() {
+  const date   = document.getElementById('transfer-date').value;
+  const fromId = document.getElementById('transfer-from').value;
+  const toId   = document.getElementById('transfer-to').value;
+  const amount = parseFloat(document.getElementById('transfer-amount').value);
+  const fee    = parseFloat(document.getElementById('transfer-fee').value) || 0;
+  const notes  = document.getElementById('transfer-notes').value;
+  if (!date || !amount || amount <= 0) { notify('⚠️ أكمل الحقول المطلوبة', 'var(--gold)'); return; }
+  if (fromId === toId) { notify('⚠️ الحساب المُرسِل والمستقبِل نفس الحساب!', 'var(--red)'); return; }
+  const from = getAccount(fromId);
+  const to   = getAccount(toId);
+  if (!from || !to) return;
+  const totalDeduct = amount + fee;
+  if (totalDeduct > from.balance) {
+    notify('⚠️ الرصيد غير كافٍ — المتاح: ' + fmt(from.balance) + ' SDG', 'var(--red)'); return;
+  }
+  from.balance -= totalDeduct;
+  to.balance   += amount;
+  const ts = Date.now();
+  // سجل خروج
+  cashMoves.push({
+    id: ts, date, type: 'transfer_out', accountId: fromId,
+    toAccountId: toId, amount, fee, balanceAfter: from.balance,
+    notes: notes || ('تحويل إلى ' + to.name)
+  });
+  // سجل دخول
+  cashMoves.push({
+    id: ts + 1, date, type: 'transfer_in', accountId: toId,
+    fromAccountId: fromId, amount, fee: 0, balanceAfter: to.balance,
+    notes: notes || ('تحويل من ' + from.name)
+  });
+  save();
+  renderCashSection(); updateHeader();
+  if (document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+  ['transfer-amount','transfer-fee','transfer-notes'].forEach(id => document.getElementById(id).value = '');
+  calcTransferPreview();
+  notify('🔁 تم التحويل: ' + fmt(amount) + ' SDG من ' + from.name + ' إلى ' + to.name + (fee>0?' (عمولة: '+fmt(fee)+' SDG)':''));
+}
+
+function renderCashLog() {
+  let list    = [...cashMoves];
+  const fAcc  = document.getElementById('cash-filter-acc')?.value  || '';
+  const fType = document.getElementById('cash-filter-type')?.value || '';
+  if (fAcc)  list = list.filter(e => e.accountId === fAcc);
+  if (fType) list = list.filter(e => e.type === fType);
+  const tbody = document.getElementById('cash-log-table');
+  if (!tbody) return;
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">💰</div>لا توجد حركات بعد</td></tr>'; return;
+  }
+  const typeLabel = { deposit:'⬆️ إيداع', withdraw:'⬇️ سحب', transfer_out:'📤 تحويل صادر', transfer_in:'📥 تحويل وارد' };
+  const typeColor = { deposit:'var(--green)', withdraw:'var(--red)', transfer_out:'var(--red)', transfer_in:'var(--green)' };
+  tbody.innerHTML = [...list].reverse().map((e, i) => `
+    <tr>
+      <td style="color:var(--text2)">${list.length - i}</td>
+      <td>${e.date}</td>
+      <td><span style="color:${typeColor[e.type]};font-weight:700;font-size:12px">${typeLabel[e.type]||e.type}</span></td>
+      <td>${accBadgeHTML(e.accountId)}</td>
+      <td style="color:${typeColor[e.type]};font-weight:700">${e.type==='deposit'||e.type==='transfer_in'?'+':'-'}${fmt(e.amount)}</td>
+      <td style="color:var(--red)">${e.fee>0?fmt(e.fee):'-'}</td>
+      <td style="color:var(--text2)">${fmt(e.balanceAfter)}</td>
+      <td style="font-size:11px;color:var(--text2)">${e.notes||'-'}</td>
+      <td><button class="btn btn-red btn-xs" onclick="deleteCashEntry(${e.id})">🗑</button></td>
+    </tr>
+  `).join('');
+}
+
+function deleteCashEntry(id) {
+  if (!confirm('حذف هذه الحركة؟ لن يُعاد الرصيد تلقائياً — ستحتاج تعديله يدوياً.')) return;
+  cashMoves = cashMoves.filter(e => e.id !== id);
+  save(); renderCashLog();
+  notify('🗑 تم حذف الحركة');
+}
+
+// ==================== BACKUP ====================
+function exportJSON() {
+  const data = { trades, inventory, settings, accounts, cashMoves: cashMoves, exportDate: new Date().toISOString(), version: 4 };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url;
+  a.download = 'sudacash-backup-v4-' + today() + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  notify('📤 تم تصدير النسخة الاحتياطية');
+}
+function importJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      if (!confirm('سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟')) return;
+      const data = JSON.parse(e.target.result);
+      trades    = data.trades    || [];
+      inventory = data.inventory || { amount: 0, totalCost: 0 };
+      settings  = data.settings  || { initCash:0, initUSDT:0, initUSDTCost:0, cashBalance:0, defaultMargin:1.5 };
+      accounts  = data.accounts  || accounts;
+      cashMoves   = data.cashMoves   || [];
+      localStorage.setItem('p2p_cash_moves', JSON.stringify(cashMoves));
+      cashMoves = data.cashMoves || [];
+      save(); populateAccountSelects(); renderDashboard(); updateHeader(); loadSettingsForm();
+      notify('✅ تم الاستيراد بنجاح — ' + trades.length + ' صفقة');
+    } catch(err) { notify('❌ خطأ في قراءة الملف', 'var(--red)'); }
+  };
+  reader.readAsText(file); input.value = '';
+}
+function exportExcel() {
+  if (!trades.length) { notify('لا توجد بيانات للتصدير', 'var(--gold)'); return; }
+  let csv = '\uFEFF';
+  csv += 'التاريخ,النوع,المنصة,الحساب,الكمية,السعر,الإجمالي,العمولة,التكلفة الحقيقية/USDT,الربح,الملاحظات\n';
+  trades.forEach(t => {
+    const acc = getAccount(t.accountId);
+    csv += [t.date, t.type==='buy'?'شراء':'بيع', t.platform, acc?acc.name:'—',
+      t.amount, t.price, t.total, t.fee||0, t.realPrice||t.price,
+      t.type==='sell'?t.profit:'', t.notes||''].join(',') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url;
+  a.download = 'sudacash-trades-' + today() + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  notify('📥 تم تصدير ملف Excel (CSV)');
+}
+function resetAll() {
+  if (!confirm('حذف جميع البيانات والإعدادات نهائياً؟')) return;
+  if (!confirm('تأكيد أخير: هذا لا يمكن التراجع عنه.')) return;
+  ['p2p_trades','p2p_inventory','p2p_settings','p2p_accounts','sc_firebase_cfg'].forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
+</script>
+</body>
+</html>
